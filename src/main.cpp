@@ -3,9 +3,7 @@
 #include <WebSocketsClient.h>
 #include <driver/i2s.h>
 #include <HTTPClient.h>
-#include <cstdlib>
-
-#include "secrets.h"
+#include "ssid.h"
 
 const char* ssid = SSID;
 const char* password = SSID_PASSWORD;
@@ -26,6 +24,8 @@ WebSocketsClient webSocket;
 #define CHUNK_SIZE      512
 #define BUFFER_SIZE     (CHUNK_SIZE * sizeof(int16_t))
 
+const int blueLedPin = 2;
+
 int16_t i2s_data[CHUNK_SIZE];
 
 // Function prototypes
@@ -34,6 +34,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length);
 
 void setup() {
   Serial.begin(115200);
+  pinMode(blueLedPin, OUTPUT);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -102,16 +103,38 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
     case WStype_DISCONNECTED:
       Serial.println("WebSocket disconnected");
       break;
+
     case WStype_CONNECTED:
       Serial.println("WebSocket connected");
       break;
+
     case WStype_TEXT:
-      Serial.printf("Received from server: %s\n", payload);
+      // Convert payload to String safely
+      if (payload != nullptr && length > 0) {
+        char message[length + 1]; // Create a char array with null terminator
+        memcpy(message, payload, length);
+        message[length] = '\0'; // Null-terminate the char array
+
+        Serial.print("Received message: ");
+        Serial.println(message);
+
+        // Control the blue LED based on the received message
+        if (String(message) == "LED_ON") {
+          Serial.println("Turning LED ON");
+          digitalWrite(blueLedPin, HIGH); // Turn LED ON (active LOW)
+        } else if (String(message) == "LED_OFF") {
+          Serial.println("Turning LED OFF");
+          digitalWrite(blueLedPin, LOW); // Turn LED OFF
+        }
+      }
       break;
+
     case WStype_BIN:
       Serial.println("Binary message received");
       break;
+
     default:
+      Serial.println("Unknown WebSocket event");
       break;
   }
 }
