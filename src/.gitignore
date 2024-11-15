@@ -1,0 +1,23 @@
+# MacOS system files
+.DS_Store
+
+# PlatformIO files and folders
+.pio/
+.vscode/
+lib/
+include/
+build/
+test/.pio/
+
+# PlatformIO build and config files
+*.elf
+*.bin
+*.hex
+*.ini.save
+
+# PlatformIO project-related files
+platformio.ini.save
+project_config.json
+
+# Arduino Libraries
+lib/
