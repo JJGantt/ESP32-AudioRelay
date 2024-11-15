@@ -5,9 +5,10 @@
 #include <HTTPClient.h>
 #include <cstdlib>
 
-// Wi-Fi credentials
-const char* ssid = std::getenv("SSID");
-const char* password = std::getenv("SSID_PASSWORD");
+#include "secrets.h"
+
+const char* ssid = SSID;
+const char* password = SSID_PASSWORD;
 
 // WebSocket server details
 const char* websocket_server = "172.20.6.231";
