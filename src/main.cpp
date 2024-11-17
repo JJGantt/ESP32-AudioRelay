@@ -35,6 +35,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length);
 void setup() {
   Serial.begin(115200);
   pinMode(blueLedPin, OUTPUT);
+  digitalWrite(blueLedPin, LOW);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -98,10 +99,55 @@ void send_audio_data(int16_t* data) {
   }
 }
 
+// Task handle for the blink task
+TaskHandle_t blinkTaskHandle = NULL;
+
+// Function to turn the LED ON
+void turnLedOn() {
+  Serial.println("Turning LED ON");
+  digitalWrite(blueLedPin, HIGH);
+}
+
+// Function to turn the LED OFF
+void turnLedOff() {
+  Serial.println("Turning LED OFF");
+  digitalWrite(blueLedPin, LOW);
+}
+
+// Blink task function
+void blinkTask(void *parameter) {
+  while (true) {
+    digitalWrite(blueLedPin, LOW);
+    vTaskDelay(200 / portTICK_PERIOD_MS); // 200ms off
+    digitalWrite(blueLedPin, HIGH);
+    vTaskDelay(200 / portTICK_PERIOD_MS); // 200ms on
+  }
+}
+
+// Function to start blinking
+void startBlinking() {
+  if (blinkTaskHandle == NULL) { // Check if blink task is already running
+    Serial.println("Starting blink task");
+    xTaskCreate(blinkTask, "BlinkTask", 1024, NULL, 1, &blinkTaskHandle);
+  }
+}
+
+// Function to stop blinking
+void stopBlinking() {
+  if (blinkTaskHandle != NULL) {
+    Serial.println("Stopping blink task");
+    vTaskDelete(blinkTaskHandle);
+    blinkTaskHandle = NULL;
+    turnLedOff(); // Ensure LED is turned off after stopping blink
+  }
+}
+
+// WebSocket event listener
 void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
       Serial.println("WebSocket disconnected");
+      stopBlinking(); // Stop blinking if disconnected
       break;
 
     case WStype_CONNECTED:
@@ -109,22 +155,20 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
       break;
 
     case WStype_TEXT:
-      // Convert payload to String safely
       if (payload != nullptr && length > 0) {
-        char message[length + 1]; // Create a char array with null terminator
-        memcpy(message, payload, length);
-        message[length] = '\0'; // Null-terminate the char array
-
+        String message = String((char *)payload).substring(0, length);
         Serial.print("Received message: ");
         Serial.println(message);
 
-        // Control the blue LED based on the received message
-        if (String(message) == "LED_ON") {
-          Serial.println("Turning LED ON");
-          digitalWrite(blueLedPin, HIGH); // Turn LED ON (active LOW)
-        } else if (String(message) == "LED_OFF") {
-          Serial.println("Turning LED OFF");
-          digitalWrite(blueLedPin, LOW); // Turn LED OFF
+        // Handle LED control commands
+        if (message == "LED_ON") {
+          stopBlinking();
+          turnLedOn();
+        } else if (message == "LED_OFF") {
+          stopBlinking();
+          turnLedOff();
+        } else if (message == "LED_BLINK") {
+          startBlinking();
         }
       }
       break;
