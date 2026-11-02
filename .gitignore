@@ -1,5 +1,5 @@
-#Wifi credentials
-ssid.h
+# Wi-Fi credentials and server address
+include/secrets.h
 
 # macOS system files
 .DS_Store

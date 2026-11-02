@@ -3,13 +3,13 @@
 #include <WebSocketsClient.h>
 #include <driver/i2s.h>
 #include <HTTPClient.h>
-#include "ssid.h"
+#include "secrets.h"
 
 const char* ssid = SSID;
 const char* password = SSID_PASSWORD;
 
 // WebSocket server details
-const char* websocket_server = "172.20.6.231";
+const char* websocket_server = WEBSOCKET_SERVER;
 const int websocket_port = 8000;
 const char* websocket_path = "/ws/audio";
 
